@@ -1,0 +1,7 @@
+nose
+pylint
+coverage
+nosexcover
+flake8
+twine
+flask

@@ -1,0 +1,45 @@
+Name: Flake8
+
+Link Name: Flake8 warnings
+
+Trend Report Name: Flake8 warnings trend
+
+Mapping Script:
+
+import hudson.plugins.warnings.parser.Warning
+import hudson.plugins.analysis.util.model.Priority
+
+String fileName = matcher.group(1)
+String type = matcher.group(4)
+String lineNumber = matcher.group(2)
+String message = matcher.group(5)
+String typeCategory = String.valueOf(type.charAt(0));
+String category
+Priority priority = Priority.NORMAL
+
+switch (typeCategory) {
+    case "E":
+        category = "PEP8 Errors"
+        priority = Priority.HIGH
+        break
+    case "W":
+        category = "PEP8 Warnings"
+        break
+    case "F":
+        category = "PyFlakes Warnings"
+        break
+    case "C":
+        category = "McCabe Warnings"
+        break
+    case "N":
+        category = "Naming Conventions Errors"
+        break
+    default:
+        category = "Unkown Warnings/Errors"
+        priority = Priority.LOW
+}
+return new Warning(fileName, Integer.parseInt(lineNumber), type, category, message, priority)
+
+Regex:
+
+^(.*):([0-9]*):([0-9]*):\ (\w{4})\ (.*)$
