@@ -332,3 +332,4 @@ ASALocalRun/
 dist/
 build/
 jenkins_sample.egg-info/
+*.egg
