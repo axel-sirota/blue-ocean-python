@@ -23,23 +23,29 @@ pipeline {
         }
         stage('Compile') {
             steps {
-                appImage.withRun(dockerArguments){
-                    "python -m  compileall -f app"
+                script {
+                    appImage.withRun(dockerArguments){
+                        "python -m  compileall -f app"
+                    }
                 }
             }
         }
         stage('Build and install'){
             steps {
-                appImage.withRun(dockerArguments){
-                    "python setup.py bdist_wheel"
-                    "python setup.py install"
+                script {
+                    appImage.withRun(dockerArguments){
+                        "python setup.py bdist_wheel"
+                        "python setup.py install"
+                    }
                 }
             }
         }
         stage('Run Tests') {
             steps {
-                appImage.withRun(dockerArguments){
-                    "python setup.py nosetests"
+                script {
+                    appImage.withRun(dockerArguments){
+                        "python setup.py nosetests"
+                    }
                 }
                 step([$class: 'JUnitResultArchiver', testResults: 'reports/tests.xml'])
                 step([$class: 'CoberturaPublisher', autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: 'reports/coverage.xml', failUnhealthy: true, failUnstable: true, maxNumberOfBuilds: 0, onlyStable: true, sourceEncoding: 'ASCII', zoomCoverageChart: true])
@@ -47,9 +53,11 @@ pipeline {
         }
         stage('Code Checking') {
             steps {
-                appImage.withRun(dockerArguments){
-                    "python -m pylint app --exit-zero >> reports/pylint.log"
-                    "python -m flake8 app --exit-zero"
+                script {
+                    appImage.withRun(dockerArguments){
+                        "python -m pylint app --exit-zero >> reports/pylint.log"
+                        "python -m flake8 app --exit-zero"
+                    }
                 }
                 step([
                     $class                     : 'WarningsPublisher',
@@ -85,8 +93,10 @@ pipeline {
                 environment name: 'TAG_ON_DOCKER_HUB', value: 'yes'
             }
             steps {
-                docker.withRegistry('', 'dockerhub-key') {
-                    appImage.push()
+                script {
+                    docker.withRegistry('', 'dockerhub-key') {
+                        appImage.push()
+                    }
                 }
             }
         }
