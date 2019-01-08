@@ -329,6 +329,6 @@ ASALocalRun/
 # MFractors (Xamarin productivity tool) working folder 
 .mfractor/
 
-dist/**
-build/**
-jenkins_sample.egg-info/**
+dist/
+build/
+jenkins_sample.egg-info/
