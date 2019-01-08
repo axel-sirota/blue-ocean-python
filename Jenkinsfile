@@ -2,7 +2,7 @@
 
 def testPypi = 'https://test.pypi.org/legacy/'
 def String imageName = "axelsirota/pluralsight-audition/jenkins-sample"
-def String dockerArguments = "-it -v ${env.WORKSPACE}/reports:/reports -p 5000:5000"
+def String dockerArguments
 def appImage
 
 pipeline {
@@ -20,6 +20,7 @@ pipeline {
             steps {
                 script {
                     appImage = docker.build("${imageName}:0.${env.BUILD_ID}", "-f ${env.WORKSPACE}/docker/Dockerfile .")
+                    dockerArguments = "-it -v ${env.WORKSPACE}/reports:/reports -p 5000:5000"
                 }
             }
         }
