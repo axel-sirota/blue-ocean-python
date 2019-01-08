@@ -9,7 +9,7 @@ ENV DEBIAN_FRONTEND noninteractive
 
 RUN apt-get update && apt-get install -qy --no-install-recommends \
     -o APT::Install-Suggests="false" -o APT::Install-Recommends="false" \
-    checkinstall python3 python3-pip python3-dev build-essential libssl-dev \
+    checkinstall python3 python3-pip python3-dev build-essential python3-setuptools libssl-dev \
     libffi-dev openssh-client openssh-server aptitude && aptitude install ssh\
     && rm -rf /var/lib/apt/lists/*
 

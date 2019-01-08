@@ -27,8 +27,8 @@ pipeline {
         stage('Compile') {
             steps {
                 script {
-                    appImage.withRun(dockerArguments){
-                        "python -m  compileall -f app"
+                    appImage.withRun(dockerArguments){ c->
+                        sh "python -m  compileall -f app"
                     }
                 }
             }
@@ -36,9 +36,9 @@ pipeline {
         stage('Build and install'){
             steps {
                 script {
-                    appImage.withRun(dockerArguments){
-                        "python setup.py bdist_wheel"
-                        "python setup.py install"
+                    appImage.withRun(dockerArguments){ c->
+                        sh "python setup.py bdist_wheel"
+                        sh "python setup.py install"
                     }
                 }
             }
@@ -46,8 +46,8 @@ pipeline {
         stage('Run Tests') {
             steps {
                 script {
-                    appImage.withRun(dockerArguments){
-                        "python setup.py nosetests"
+                    appImage.withRun(dockerArguments){ c->
+                        sh "python setup.py nosetests"
                     }
                 }
                 step([$class: 'JUnitResultArchiver', testResults: 'reports/tests.xml'])
@@ -57,9 +57,9 @@ pipeline {
         stage('Code Checking') {
             steps {
                 script {
-                    appImage.withRun(dockerArguments){
-                        "python -m pylint app --exit-zero >> reports/pylint.log"
-                        "python -m flake8 app --exit-zero"
+                    appImage.withRun(dockerArguments){ c->
+                        sh "python -m pylint app --exit-zero >> reports/pylint.log"
+                        sh "python -m flake8 app --exit-zero"
                     }
                 }
                 step([
