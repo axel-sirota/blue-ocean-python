@@ -10,7 +10,7 @@ pipeline {
     stages {
         stage('Setup Environment') {
             steps {
-                bash '''#!/bin/bash
+                sh '''#!/bin/bash
                     python3 -m pip install virtualenv
                     mkdir -p reports 
                 ''' 
