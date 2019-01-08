@@ -1,4 +1,12 @@
-from setuptools import setup
+from setuptools import setup, find_packages
+
+def get_install_requires():
+    requirements = []
+    with open('requirements.txt', 'r') as infile:
+        for line in infile:
+            if not line.startswith('#'):
+                requirements.append(line)
+    return requirements
 
 setup(name='jenkins-sample',
       version='0.1',
@@ -25,16 +33,8 @@ setup(name='jenkins-sample',
     "Programming Language :: Python :: Implementation :: PyPy",
     "Topic :: Software Development :: Libraries :: Python Modules",
     ],
-      packages=['app'],
-      install_requires=[
-        'nose',
-        'pylint',
-        'coverage',
-        'nosexcover',
-        'flake8',
-        'twine',
-        'flask'
-      ],
+    packages=find_packages(exclude='tests'),
+      install_requires=get_install_requires(),
       test_suite='nose.collector',
       tests_require=['nose'],
       entry_points={

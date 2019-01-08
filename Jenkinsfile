@@ -1,68 +1,46 @@
 #!/usr/bin/env groovy
 
-pythonExecutable = '$WORKSPACE/temp/bin/python3'
 def testPypi = 'https://test.pypi.org/legacy/'
+def String imageName = "axelsirota/pluralsight-audition/jenkins-sample"
+def String dockerArguments = "-it -v ${env.WORKSPACE}/reports:/reports -p 5000:5000"
 
-
-def runTests(int threshold, String unitTime, String typeOfTest) {
-    println "Llegue"
-    println "${pythonExecutable} setup.py nosetests --verbose --with-xunit --xunit-file=output/xunit.xml --with-xcoverage --xcoverage-file=output/coverage.xml --cover-package=funniest --tests tests/${typeOfTest}"
-    timestamps {
-        timeout(time: threshold, unit: unitTime) {
-            try {
-                sh "${pythonExecutable} setup.py nosetests --verbose --with-xunit --xunit-file=output/xunit.xml --with-xcoverage --xcoverage-file=output/coverage.xml --cover-package=funniest --tests tests/${typeOfTest}"
-            } finally {
-                step([$class: 'JUnitResultArchiver', testResults: 'output/xunit.xml'])
-                step([$class: 'CoberturaPublisher', autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: 'output/coverage.xml', failUnhealthy: true, failUnstable: true, maxNumberOfBuilds: 0, onlyStable: true, sourceEncoding: 'ASCII', zoomCoverageChart: true])
+pipeline {
+    agent any
+    stages {
+        def appImage
+        stage('Setup Environment') {
+            sh 'python3 -m pip install virtualenv'
+            sh 'mkdir -p reports' 
+        }
+        stage ('Build Image') {
+            script {
+                appImage = docker.build("${imageName}:0.${env.BUILD_ID}", "docker/Dockerfile")
             }
         }
-    }
-}
-
-def cleanup() {
-    def exec = """
-        rm -rf *
-        pip3 install --quiet virtualenv
-        virtualenv --no-site-packages -p \$(which python3) temp
-        . ${env.WORKSPACE}/temp/bin/activate
-        mkdir output
-    """
-    sh exec
-}
-
-node {
-
-        stage('Clean') {
-            cleanup()
-        }
-
-        stage('Checkout SCM') {
-            checkout scm
-        }
-
         stage('Compile') {
-            timeout(time: 30, unit: 'SECONDS') {
-                sh "${pythonExecutable} -m compileall -f -q funniest_ieee"
+            appImage.withRun(dockerArguments){
+                "python -m  compileall -f app"
             }
         }
-
-        stage('Build .whl & .tar.gz') {
-            sh "${pythonExecutable} setup.py bdist_wheel"
+        stage('Build and install'){
+            appImage.withRun(dockerArguments){
+                "python setup.py bdist_wheel"
+                "python setup.py install"
+            }
         }
-
-        stage('Install dependencies') {
-            sh "${pythonExecutable} -m pip install -U --quiet ."
+        stage('Run Tests') {
+            appImage.withRun(dockerArguments){
+                "python setup.py nosetests"
+            }
+            step([$class: 'JUnitResultArchiver', testResults: 'reports/tests.xml'])
+            step([$class: 'CoberturaPublisher', autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: 'reports/coverage.xml', failUnhealthy: true, failUnstable: true, maxNumberOfBuilds: 0, onlyStable: true, sourceEncoding: 'ASCII', zoomCoverageChart: true])
         }
-
-        stage('Unit Tests') {
-            runTests(30, 'MINUTES', 'units')
-        }
-
-        stage('Code checking') {
-
-            sh "${pythonExecutable} -m pylint --output-format=parseable --reports=y funniest_ieee > output/pylint.log || exit 0"
-            sh "${pythonExecutable} -m flake8 --exit-zero --output-file=output/flake8.log funniest_ieee"
-                        step([
+        stage('Code Checking') {
+            appImage.withRun(dockerArguments){
+                "python -m pylint app --exit-zero >> reports/pylint.log"
+                "python -m flake8 app --exit-zero"
+            }
+            step([
                 $class                     : 'WarningsPublisher',
                 parserConfigurations       : [[parserName: 'PYLint', pattern   : 'output/pylint.log']],
                 unstableTotalAll           : '20',
@@ -75,23 +53,28 @@ node {
                 usePreviousBuildAsReference: true
             ])
         }
-
-
-        stage('Archive build artifact: .whl , .tar.gz and reports') {
-            archive 'dist/*'
-            archive 'output/*'
+        stage('Archive reports') {
+            archive 'reports/*'
         }
-}
-
-input('Deploy to Pypi?')
-
-node {
-        stage('Deploy to Pypi') {
-            sh "${pythonExecutable} -m twine upload --config-file .pypirc -r test dist/funniest_ieee-0.5-py2.py3-none-any.whl"
+        stage('Decide to deploy to Docker Hub') {
+            agent none
+            steps {
+                script {
+                env.TAG_ON_DOCKER_HUB = input message: 'User input required',
+                    parameters: [choice(name: 'Deploy to Docker Hub', choices: 'no\nyes', description: 'Choose "yes" if you want to deploy this build')]
+                }
+            }
         }
-
-        stage('Clean all'){
-            sh 'rm -rf temp'
+        stage('Deploy to Docker Hub') {
+            agent any
+            when {
+                environment name: 'TAG_ON_DOCKER_HUB', value: 'yes'
+            }
+            steps {
+                docker.withRegistry('', 'dockerhub-key') {
+                    appImage.push()
+                }
+            }
         }
-
+    }
 }
