@@ -19,7 +19,7 @@ pipeline {
         stage ('Build Image') {
             steps {
                 script {
-                    appImage = docker.build("${imageName}:0.${env.BUILD_ID}", "docker/Dockerfile")
+                    appImage = docker.build("${imageName}:0.${env.BUILD_ID}", "-f ${env.WORKSPACE}/docker/Dockerfile .")
                 }
             }
         }
