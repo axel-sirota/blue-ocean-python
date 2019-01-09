@@ -27,7 +27,7 @@ pipeline {
         stage('Compile') {
             steps {
                 script {
-                    appImage.withRun(dockerArguments){ c->
+                    appImage.inside(dockerArguments){
                         sh "entrypoint.sh python -m  compileall -f app"
                     }
                 }
@@ -36,7 +36,7 @@ pipeline {
         stage('Build and install'){
             steps {
                 script {
-                    appImage.withRun(dockerArguments){ c->
+                    appImage.inside(dockerArguments){
                         sh "entrypoint.sh python setup.py bdist_wheel"
                         sh "entrypoint.sh python setup.py install"
                     }
@@ -46,7 +46,7 @@ pipeline {
         stage('Run Tests') {
             steps {
                 script {
-                    appImage.withRun(dockerArguments){ c->
+                    appImage.inside(dockerArguments){ 
                         sh "entrypoint.sh python setup.py nosetests"
                     }
                 }
@@ -57,7 +57,7 @@ pipeline {
         stage('Code Checking') {
             steps {
                 script {
-                    appImage.withRun(dockerArguments){ c->
+                    appImage.inside(dockerArguments){
                         sh "entrypoint.sh python -m pylint app --exit-zero >> reports/pylint.log"
                         sh "entrypoint.sh python -m flake8 app --exit-zero"
                     }
