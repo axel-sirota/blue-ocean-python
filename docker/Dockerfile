@@ -37,9 +37,3 @@ RUN chmod +x /usr/local/bin/entrypoint.sh \
     && mkdir -p /report
 
 EXPOSE 5000
-
-# Set defaults for entrypoint and command string
-ENTRYPOINT ["entrypoint.sh"]
-
-# OUTPUT: Reports are output here
-VOLUME /report
