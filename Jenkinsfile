@@ -12,7 +12,7 @@ pipeline {
             steps {
                 sh '''#!/bin/bash
                     python3 -m pip install virtualenv
-                    mkdir -p report
+                    mkdir -p ${env.WORKSPACE}/report
                 ''' 
             }
         }
@@ -50,8 +50,8 @@ pipeline {
                         sh "entrypoint.sh python setup.py pytest"
                     }
                 }
-                step([$class: 'JUnitResultArchiver', testResults: 'report/tests.xml'])
-                step([$class: 'CoberturaPublisher', autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: 'report/coverage.xml', failUnhealthy: true, failUnstable: true, maxNumberOfBuilds: 0, onlyStable: true, sourceEncoding: 'ASCII', zoomCoverageChart: true])
+                step([$class: 'JUnitResultArchiver', testResults: "${env.WORKSPACE}/report/tests.xml"])
+                step([$class: 'CoberturaPublisher', autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: "${env.WORKSPACE}/report/coverage.xml", failUnhealthy: true, failUnstable: true, maxNumberOfBuilds: 0, onlyStable: true, sourceEncoding: 'ASCII', zoomCoverageChart: true])
             }
         }
         stage('Code Checking') {
@@ -63,13 +63,13 @@ pipeline {
                 }
                 step([
                     $class                     : 'WarningsPublisher',
-                    parserConfigurations       : [[parserName: 'PYLint', pattern   : 'report/pylint.log']],
+                    parserConfigurations       : [[parserName: 'PYLint', pattern   : "${env.WORKSPACE}/report/pylint.log"]],
                     unstableTotalAll           : '20',
                     usePreviousBuildAsReference: true
                 ])
                 step([
                     $class                     : 'WarningsPublisher',
-                    parserConfigurations       : [[parserName: 'Flake8', pattern   : 'report/flake8.log']],
+                    parserConfigurations       : [[parserName: 'Flake8', pattern   : "${env.WORKSPACE}/report/flake8.log"]],
                     unstableTotalAll           : '20',
                     usePreviousBuildAsReference: true
                 ])
@@ -77,7 +77,7 @@ pipeline {
         }
         stage('Archive reports') {
             steps {
-                archive 'report/*'
+                archive "${env.WORKSPACE}/report/*"
             }
         }
         stage('Decide to deploy to Docker Hub') {
