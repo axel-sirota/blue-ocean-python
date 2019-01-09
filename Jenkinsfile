@@ -1,7 +1,7 @@
 #!/usr/bin/env groovy
 
 def testPypi = 'https://test.pypi.org/legacy/'
-def String imageName = "axelsirota/pluralsight-audition/jenkins-sample"
+def String imageName = "axelsirota/jenkins-sample/jenkins-sample"
 def String dockerArguments
 def appImage
 
@@ -10,10 +10,9 @@ pipeline {
     stages {
         stage('Setup Environment') {
             steps {
-                sh '''#!/bin/bash
-                    python3 -m pip install virtualenv
-                    mkdir -p ${env.WORKSPACE}/report
-                ''' 
+                sh "mkdir -p ${env.WORKSPACE}/report"
+                sh "ls -lah ${env.WORKSPACE}/report"
+                sh "ls -lah ."
             }
         }
         stage ('Build Image') {
@@ -50,6 +49,8 @@ pipeline {
                         sh "entrypoint.sh python setup.py pytest"
                     }
                 }
+                sh "ls -lah ${env.WORKSPACE}/report"
+                sh "ls -lah ."
                 step([$class: 'JUnitResultArchiver', testResults: "${env.WORKSPACE}/report/tests.xml"])
                 step([$class: 'CoberturaPublisher', autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: "${env.WORKSPACE}/report/coverage.xml", failUnhealthy: true, failUnstable: true, maxNumberOfBuilds: 0, onlyStable: true, sourceEncoding: 'ASCII', zoomCoverageChart: true])
             }
