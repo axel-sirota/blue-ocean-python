@@ -333,3 +333,6 @@ dist/
 build/
 jenkins_sample.egg-info/
 *.egg
+.eggs/
+report/
+.mypy_cache/

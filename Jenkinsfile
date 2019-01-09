@@ -12,7 +12,7 @@ pipeline {
             steps {
                 sh '''#!/bin/bash
                     python3 -m pip install virtualenv
-                    mkdir -p reports 
+                    mkdir -p report
                 ''' 
             }
         }
@@ -20,7 +20,7 @@ pipeline {
             steps {
                 script {
                     appImage = docker.build("${imageName}:0.${env.BUILD_ID}", "-f ${env.WORKSPACE}/docker/Dockerfile .")
-                    dockerArguments = "-it -v ${env.WORKSPACE}/reports:/reports -p 5000:5000"
+                    dockerArguments = "-it -v ${env.WORKSPACE}/report:/report -p 5000:5000"
                 }
             }
         }
@@ -47,30 +47,29 @@ pipeline {
             steps {
                 script {
                     appImage.inside(dockerArguments){ 
-                        sh "entrypoint.sh python setup.py nosetests"
+                        sh "entrypoint.sh python setup.py pytest"
                     }
                 }
-                step([$class: 'JUnitResultArchiver', testResults: 'reports/tests.xml'])
-                step([$class: 'CoberturaPublisher', autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: 'reports/coverage.xml', failUnhealthy: true, failUnstable: true, maxNumberOfBuilds: 0, onlyStable: true, sourceEncoding: 'ASCII', zoomCoverageChart: true])
+                step([$class: 'JUnitResultArchiver', testResults: 'report/tests.xml'])
+                step([$class: 'CoberturaPublisher', autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: 'report/coverage.xml', failUnhealthy: true, failUnstable: true, maxNumberOfBuilds: 0, onlyStable: true, sourceEncoding: 'ASCII', zoomCoverageChart: true])
             }
         }
         stage('Code Checking') {
             steps {
                 script {
                     appImage.inside(dockerArguments){
-                        sh "entrypoint.sh python -m pylint app --exit-zero >> reports/pylint.log"
-                        sh "entrypoint.sh python -m flake8 app --exit-zero"
+                        sh "entrypoint.sh python -m pylint app --exit-zero >> report/pylint.log"
                     }
                 }
                 step([
                     $class                     : 'WarningsPublisher',
-                    parserConfigurations       : [[parserName: 'PYLint', pattern   : 'output/pylint.log']],
+                    parserConfigurations       : [[parserName: 'PYLint', pattern   : 'report/pylint.log']],
                     unstableTotalAll           : '20',
                     usePreviousBuildAsReference: true
                 ])
                 step([
                     $class                     : 'WarningsPublisher',
-                    parserConfigurations       : [[parserName: 'Flake8', pattern   : 'output/flake8.log']],
+                    parserConfigurations       : [[parserName: 'Flake8', pattern   : 'report/flake8.log']],
                     unstableTotalAll           : '20',
                     usePreviousBuildAsReference: true
                 ])
@@ -78,7 +77,7 @@ pipeline {
         }
         stage('Archive reports') {
             steps {
-                archive 'reports/*'
+                archive 'report/*'
             }
         }
         stage('Decide to deploy to Docker Hub') {

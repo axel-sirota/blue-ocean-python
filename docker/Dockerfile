@@ -34,7 +34,7 @@ RUN . /venv/bin/activate && \
 # Add test entrypoint script
 COPY docker/scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh \
-    && mkdir -p /reports
+    && mkdir -p /report
 
 EXPOSE 5000
 
@@ -42,4 +42,4 @@ EXPOSE 5000
 ENTRYPOINT ["entrypoint.sh"]
 
 # OUTPUT: Reports are output here
-VOLUME /reports
+VOLUME /report
