@@ -28,7 +28,7 @@ pipeline {
             steps {
                 script {
                     appImage.withRun(dockerArguments){ c->
-                        sh "python -m  compileall -f app"
+                        sh "entrypoint.sh python -m  compileall -f app"
                     }
                 }
             }
@@ -37,8 +37,8 @@ pipeline {
             steps {
                 script {
                     appImage.withRun(dockerArguments){ c->
-                        sh "python setup.py bdist_wheel"
-                        sh "python setup.py install"
+                        sh "entrypoint.sh python setup.py bdist_wheel"
+                        sh "entrypoint.sh python setup.py install"
                     }
                 }
             }
@@ -47,7 +47,7 @@ pipeline {
             steps {
                 script {
                     appImage.withRun(dockerArguments){ c->
-                        sh "python setup.py nosetests"
+                        sh "entrypoint.sh python setup.py nosetests"
                     }
                 }
                 step([$class: 'JUnitResultArchiver', testResults: 'reports/tests.xml'])
@@ -58,8 +58,8 @@ pipeline {
             steps {
                 script {
                     appImage.withRun(dockerArguments){ c->
-                        sh "python -m pylint app --exit-zero >> reports/pylint.log"
-                        sh "python -m flake8 app --exit-zero"
+                        sh "entrypoint.sh python -m pylint app --exit-zero >> reports/pylint.log"
+                        sh "entrypoint.sh python -m flake8 app --exit-zero"
                     }
                 }
                 step([
