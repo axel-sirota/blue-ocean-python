@@ -8,23 +8,17 @@ def appImage
 pipeline {
     agent any
     stages {
-        stage('Cleanup') {
-            steps {
-                sh "rm -rf report"
-            }
-        }
         stage ('Build Image') {
             steps {
                 script {
                     appImage = docker.build("${imageName}:0.${env.BUILD_ID}", "-f ${env.WORKSPACE}/docker/Dockerfile .")
-                    dockerArguments = "-u root"
                 }
             }
         }
         stage('Compile') {
             steps {
                 script {
-                    appImage.inside(dockerArguments){
+                    appImage.inside(){
                         sh "entrypoint.sh python -m  compileall -f app"
                     }
                 }
@@ -33,7 +27,7 @@ pipeline {
         stage('Build and install'){
             steps {
                 script {
-                    appImage.inside(dockerArguments){
+                    appImage.inside(){
                         sh "entrypoint.sh python setup.py bdist_wheel"
                         sh "entrypoint.sh python setup.py install"
                     }
@@ -43,7 +37,7 @@ pipeline {
         stage('Run Tests') {
             steps {
                 script {
-                    appImage.inside(dockerArguments){ c->
+                    appImage.inside(){
                         sh "entrypoint.sh python setup.py pytest"
                         sh "ls -lah ."
                         sh "ls -lah report"
@@ -63,7 +57,7 @@ pipeline {
         stage('Code Checking') {
             steps {
                 script {
-                    appImage.inside(dockerArguments){
+                    appImage.inside(){
                         sh "entrypoint.sh python -m pylint app --exit-zero >> report/pylint.log"
                     }
                 }
@@ -75,11 +69,11 @@ pipeline {
                     ])
             }
         }
-        // stage('Archive reports') {
-        //     steps {
-        //         archive "${env.WO/*"
-        //     }
-        // }
+        stage('Archive reports') {
+            steps {
+                archive "report/*"
+            }
+        }
         stage('Decide to deploy to Docker Hub') {
             agent none
             steps {
