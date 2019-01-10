@@ -8,18 +8,16 @@ def appImage
 pipeline {
     agent any
     stages {
-        stage('Setup Environment') {
+        stage('Cleanup') {
             steps {
-                sh "mkdir -p ${env.WORKSPACE}/report"
-                sh "ls -lah ${env.WORKSPACE}/report"
-                sh "ls -lah ."
+                sh "rm -rf report"
             }
         }
         stage ('Build Image') {
             steps {
                 script {
                     appImage = docker.build("${imageName}:0.${env.BUILD_ID}", "-f ${env.WORKSPACE}/docker/Dockerfile .")
-                    dockerArguments = "-it -v ${env.WORKSPACE}/report:/report -p 5000:5000"
+                    dockerArguments = "-u root"
                 }
             }
         }
@@ -45,14 +43,21 @@ pipeline {
         stage('Run Tests') {
             steps {
                 script {
-                    appImage.inside(dockerArguments){ 
+                    appImage.inside(dockerArguments){ c->
                         sh "entrypoint.sh python setup.py pytest"
+                        sh "ls -lah ."
+                        sh "ls -lah report"
+                        sh "ls -lah ${env.WORKSPACE}"
+                        junit allowEmptyResults: true, testResults: "report/tests.xml"
+                        cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: "report/coverage.xml", conditionalCoverageTargets: '70, 0, 0', lineCoverageTargets: '80, 0, 0', maxNumberOfBuilds: 0, methodCoverageTargets: '80, 0, 0', onlyStable: false, sourceEncoding: 'ASCII', zoomCoverageChart: false
+                        step([
+                                    $class                     : 'WarningsPublisher',
+                                    parserConfigurations       : [[parserName: 'Flake8', pattern   : "report/flake8.log"]],
+                                    unstableTotalAll           : '20',
+                                    usePreviousBuildAsReference: true
+                                ])
                     }
                 }
-                sh "ls -lah ${env.WORKSPACE}/report"
-                sh "ls -lah ."
-                step([$class: 'JUnitResultArchiver', testResults: "${env.WORKSPACE}/report/tests.xml"])
-                step([$class: 'CoberturaPublisher', autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: "${env.WORKSPACE}/report/coverage.xml", failUnhealthy: true, failUnstable: true, maxNumberOfBuilds: 0, onlyStable: true, sourceEncoding: 'ASCII', zoomCoverageChart: true])
             }
         }
         stage('Code Checking') {
@@ -63,24 +68,18 @@ pipeline {
                     }
                 }
                 step([
-                    $class                     : 'WarningsPublisher',
-                    parserConfigurations       : [[parserName: 'PYLint', pattern   : "${env.WORKSPACE}/report/pylint.log"]],
-                    unstableTotalAll           : '20',
-                    usePreviousBuildAsReference: true
-                ])
-                step([
-                    $class                     : 'WarningsPublisher',
-                    parserConfigurations       : [[parserName: 'Flake8', pattern   : "${env.WORKSPACE}/report/flake8.log"]],
-                    unstableTotalAll           : '20',
-                    usePreviousBuildAsReference: true
-                ])
+                        $class                     : 'WarningsPublisher',
+                        parserConfigurations       : [[parserName: 'PYLint', pattern   : "report/pylint.log"]],
+                        unstableTotalAll           : '20',
+                        usePreviousBuildAsReference: true
+                    ])
             }
         }
-        stage('Archive reports') {
-            steps {
-                archive "${env.WORKSPACE}/report/*"
-            }
-        }
+        // stage('Archive reports') {
+        //     steps {
+        //         archive "${env.WO/*"
+        //     }
+        // }
         stage('Decide to deploy to Docker Hub') {
             agent none
             steps {
