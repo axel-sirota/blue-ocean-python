@@ -1,7 +1,7 @@
 #!/usr/bin/env groovy
 
 def testPypi = 'https://test.pypi.org/legacy/'
-def String imageName = "axelsirota/jenkins-sample/jenkins-sample"
+def String imageName = "axelsirota/enkins-sample"
 def String dockerArguments
 def appImage
 
@@ -90,7 +90,7 @@ pipeline {
             }
             steps {
                 script {
-                    docker.withRegistry('', 'dockerhub-key') {
+                    docker.withRegistry('', 'dockerhub') {
                         appImage.push()
                     }
                 }
