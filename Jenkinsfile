@@ -39,17 +39,8 @@ pipeline {
                 script {
                     appImage.inside(){
                         sh "entrypoint.sh python setup.py pytest"
-                        sh "ls -lah ."
-                        sh "ls -lah report"
-                        sh "ls -lah ${env.WORKSPACE}"
                         junit allowEmptyResults: true, testResults: "report/tests.xml"
                         cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: "report/coverage.xml", conditionalCoverageTargets: '70, 0, 0', lineCoverageTargets: '80, 0, 0', maxNumberOfBuilds: 0, methodCoverageTargets: '80, 0, 0', onlyStable: false, sourceEncoding: 'ASCII', zoomCoverageChart: false
-                        step([
-                                    $class                     : 'WarningsPublisher',
-                                    parserConfigurations       : [[parserName: 'Flake8', pattern   : "report/flake8.log"]],
-                                    unstableTotalAll           : '20',
-                                    usePreviousBuildAsReference: true
-                                ])
                     }
                 }
             }
