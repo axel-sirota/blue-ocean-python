@@ -11,7 +11,7 @@ pipeline {
         stage ('Build Image') {
             steps {
                 script {
-                    appImage = docker.build("${imageName}:0.${env.BUILD_ID}", "-f ${env.WORKSPACE}/docker/Dockerfile .")
+                    appImage = docker.build("${imageName}:1.0-rc${env.BUILD_ID}", "-f ${env.WORKSPACE}/docker/Dockerfile .")
                 }
             }
         }
