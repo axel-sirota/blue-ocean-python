@@ -10,10 +10,10 @@ def get_install_requires():
     return requirements
 
 
-setup(name='jenkins-sample',
+setup(name='blue-ocean-python',
       version='0.1',
       description='Sample web application being served',
-      url='https://github.com/axel-sirota/jenkins-audition',
+      url='https://github.com/axel-sirota/blue-ocean-python',
       author='Axel Sirota',
       author_email='axel.sirota@example.com',
       license='GPL-3.0',
