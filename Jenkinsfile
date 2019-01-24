@@ -1,7 +1,7 @@
 #!/usr/bin/env groovy
 
 def testPypi = 'https://test.pypi.org/legacy/'
-def String imageName = "axelsirota/blue-ocean-python"
+def String imageName = "axelsirota/jenkins-sample"
 def String dockerArguments
 def appImage
 
