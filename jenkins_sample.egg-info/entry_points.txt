@@ -1,3 +1,0 @@
-[console_scripts]
-flasky = app.__main__:main
-
